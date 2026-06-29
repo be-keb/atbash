@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atbash Cipher</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0a0a;
+  color: #e0e0e0;
+  font-family: 'Courier New', monospace;
+  overflow-x: hidden;
+  cursor: crosshair;
+}
+        .download-btn {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.9rem 2.2rem;
+            background: transparent;
+            border: 1px solid var(--neon);
+            color: var(--neon);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+#canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.glitch {
+  font-size: clamp(3rem, 12vw, 10rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  position: relative;
+  color: #fff;
+  text-shadow:
+    0 0 10px rgba(255,255,255,0.5),
+    0 0 40px rgba(255,255,255,0.3),
+    0 0 80px rgba(255,255,255,0.1);
+  animation: glitch-skew 3s infinite linear alternate-reverse;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  left: 2px;
+  text-shadow: -2px 0 #ff0040;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  left: -2px;
+  text-shadow: -2px 0 #00e5ff, 2px 2px #ff0040;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% { clip: rect(30px, 9999px, 10px, 0); }
+  20% { clip: rect(80px, 9999px, 90px, 0); }
+  40% { clip: rect(10px, 9999px, 50px, 0); }
+  60% { clip: rect(60px, 9999px, 20px, 0); }
+  80% { clip: rect(40px, 9999px, 70px, 0); }
+  100% { clip: rect(20px, 9999px, 80px, 0); }
+}
+
+@keyframes glitch-anim2 {
+  0% { clip: rect(60px, 9999px, 30px, 0); }
+  20% { clip: rect(10px, 9999px, 80px, 0); }
+  40% { clip: rect(50px, 9999px, 20px, 0); }
+  60% { clip: rect(90px, 9999px, 60px, 0); }
+  80% { clip: rect(30px, 9999px, 40px, 0); }
+  100% { clip: rect(70px, 9999px, 10px, 0); }
+}
+
+@keyframes glitch-skew {
+  0% { transform: skew(0deg); }
+  10% { transform: skew(-2deg); }
+  20% { transform: skew(2deg); }
+  30% { transform: skew(0deg); }
+  100% { transform: skew(0deg); }
+}
+
+.subtitle {
+  font-size: clamp(0.8rem, 2vw, 1.2rem);
+  letter-spacing: 0.5em;
+  margin-top: 2rem;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.cipher-grid {
+  position: relative;
+  z-index: 2;
+  padding: 8rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.grid-title {
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  margin-bottom: 4rem;
+  text-align: center;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.alphabet {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 1rem;
+  margin-bottom: 6rem;
+}
+
+.letter-pair {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.letter-pair::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.letter-pair:hover::before {
+  left: 100%;
+}
+
+.letter-pair:hover {
+  border-color: rgba(255,255,255,0.3);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.plain {
+  font-size: 1.5rem;
+  color: #666;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.cipher {
+  font-size: 2rem;
+  color: #fff;
+  font-weight: bold;
+  display: block;
+}
+
+.demo-section {
+  position: relative;
+  z-index: 2;
+  padding: 8rem 2rem;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8), transparent);
+}
+
+.demo-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.demo-title {
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  margin-bottom: 3rem;
+  text-align: center;
+  letter-spacing: 0.2em;
+}
+
+.input-wrapper {
+  position: relative;
+  margin-bottom: 3rem;
+}
+
+.text-input {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 1.5rem 2rem;
+  font-size: 1.2rem;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.text-input:focus {
+  border-color: rgba(255,255,255,0.5);
+  box-shadow: 0 0 30px rgba(255,255,255,0.05);
+}
+
+.text-input::placeholder {
+  color: rgba(255,255,255,0.2);
+}
+
+.output-box {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 2rem;
+  min-height: 120px;
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
+  word-break: break-all;
+  position: relative;
+}
+
+.output-label {
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  background: #0a0a0a;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+
+.features {
+  position: relative;
+  z-index: 2;
+  padding: 8rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.feature-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 3rem 2rem;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff0040, #00e5ff);
+  transition: width 0.4s ease;
+}
+
+.feature-card:hover::after {
+  width: 100%;
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.feature-num {
+  font-size: 3rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.05);
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+}
+
+.feature-title {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.feature-desc {
+  color: rgba(255,255,255,0.5);
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+
+.specimen {
+  position: relative;
+  z-index: 2;
+  padding: 8rem 2rem;
+  overflow: hidden;
+}
+
+.specimen-track {
+  display: flex;
+  white-space: nowrap;
+  animation: scroll 30s linear infinite;
+}
+
+.specimen-track:hover {
+  animation-play-state: paused;
+}
+
+.specimen-text {
+  font-size: clamp(4rem, 15vw, 12rem);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  padding: 0 2rem;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255,255,255,0.15);
+  transition: all 0.3s ease;
+}
+
+.specimen-text:hover {
+  color: #fff;
+  -webkit-text-stroke: 1px #fff;
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.footer {
+  position: relative;
+  z-index: 2;
+  padding: 4rem 2rem;
+  text-align: center;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.footer-text {
+  font-size: 0.8rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+
+.scanline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0),
+    rgba(255,255,255,0) 50%,
+    rgba(0,0,0,0.1) 50%,
+    rgba(0,0,0,0.1)
+  );
+  background-size: 100% 4px;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+@media (max-width: 768px) {
+  .alphabet {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<div class="scanline"></div>
+
+<section class="hero">
+  <h1 class="glitch" data-text="BASH CIPHER">Atbash Cipher</h1>
+  <p class="subtitle">Reverse Mirror Alphabet Typeface</p>
+  <a href="fonts/Atbash_cipher-Regular.ttf" download class="download-btn">Download Font</a>
+</section>
+
+<section class="cipher-grid">
+  <h2 class="grid-title">The Substitution Matrix</h2>
+  <div class="alphabet" id="alphabet"></div>
+</section>
+
+<section class="demo-section">
+  <div class="demo-container">
+    <h2 class="demo-title">Live Encoder</h2>
+    <div class="input-wrapper">
+      <input type="text" class="text-input" id="encoder" placeholder="Type something to encode..." autocomplete="off">
+    </div>
+    <div class="output-box">
+      <span class="output-label">Ciphertext</span>
+      <div id="output"></div>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-num">01</span>
+      <h3 class="feature-title">Monoalphabetic</h3>
+      <p class="feature-desc">Each letter maps to exactly one counterpart. A becomes Z, B becomes Y, the alphabet folds in perfect symmetry.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-num">02</span>
+      <h3 class="feature-title">Self-Inverse</h3>
+      <p class="feature-desc">Applying the cipher twice returns the original text. Encryption and decryption are the exact same operation.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-num">03</span>
+      <h3 class="feature-title">Ancient Origin</h3>
+      <p class="feature-desc">Traced to biblical Hebrew texts. Used in Jeremiah and Ezekiel to conceal names of foreign nations.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-num">04</span>
+      <h3 class="feature-title">Geometric</h3>
+      <p class="feature-desc">Built on pure mathematical symmetry. The midpoint of the alphabet acts as the axis of reflection.</p>
+    </div>
+  </div>
+</section>
+
+<section class="specimen">
+  <div class="specimen-track" id="specimenTrack">
+    <span class="specimen-text">ABCDEFGHIJKLMNOPQRSTUVWXYZ</span>
+    <span class="specimen-text">ZYXWVUTSRQPONMLKJIHGFEDCBA</span>
+    <span class="specimen-text">ABCDEFGHIJKLMNOPQRSTUVWXYZ</span>
+    <span class="specimen-text">ZYXWVUTSRQPONMLKJIHGFEDCBA</span>
+  </div>
+</section>
+
+<footer class="footer">
+  <p class="footer-text">Bash Cipher Typeface MMXXVI</p>
+</footer>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+function resize() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const fontSize = 14;
+let columns;
+let drops = [];
+
+function initMatrix() {
+  columns = Math.floor(width / fontSize);
+  drops = [];
+  for (let i = 0; i < columns; i++) {
+    drops[i] = Math.random() * -100;
+  }
+}
+initMatrix();
+window.addEventListener('resize', initMatrix);
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.font = fontSize + 'px monospace';
+
+  for (let i = 0; i < drops.length; i++) {
+    const text = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+    if (drops[i] * fontSize > height && Math.random() > 0.975) {
+      drops[i] = 0;
+    }
+    drops[i]++;
+  }
+}
+
+setInterval(drawMatrix, 33);
+
+const alphabet = document.getElementById('alphabet');
+const plain = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const cipher = 'ZYXWVUTSRQPONMLKJIHGFEDCBA';
+
+for (let i = 0; i < 26; i++) {
+  const pair = document.createElement('div');
+  pair.className = 'letter-pair';
+  pair.innerHTML = `<span class="plain">${plain[i]}</span><span class="cipher">${cipher[i]}</span>`;
+  alphabet.appendChild(pair);
+}
+
+const encoder = document.getElementById('encoder');
+const output = document.getElementById('output');
+
+encoder.addEventListener('input', (e) => {
+  const text = e.target.value.toUpperCase();
+  let result = '';
+  for (let char of text) {
+    const idx = plain.indexOf(char);
+    if (idx !== -1) {
+      result += cipher[idx];
+    } else if (char === ' ') {
+      result += ' ';
+    } else {
+      result += char;
+    }
+  }
+  output.textContent = result || '...';
+});
+
+const specimenTrack = document.getElementById('specimenTrack');
+for (let i = 0; i < 4; i++) {
+  const span1 = document.createElement('span');
+  span1.className = 'specimen-text';
+  span1.textContent = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const span2 = document.createElement('span');
+  span2.className = 'specimen-text';
+  span2.textContent = 'ZYXWVUTSRQPONMLKJIHGFEDCBA';
+  specimenTrack.appendChild(span1);
+  specimenTrack.appendChild(span2);
+}
+
+document.addEventListener('mousemove', (e) => {
+  const x = e.clientX / window.innerWidth;
+  const y = e.clientY / window.innerHeight;
+  document.body.style.background = `radial-gradient(circle at ${x * 100}% ${y * 100}%, #111 0%, #0a0a0a 50%)`;
+});
+</script>
+
+</body>
+</html>
