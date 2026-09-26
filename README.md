@@ -1,4 +1,4 @@
-# Bash Cipher
+<h1><p align="center" font><bold>Bash Cipher</bold></p></h1>
 
 <p align="center">
   <img src="assets/attbash.png" alt="Atbash Cipher" width="600">
