@@ -24,7 +24,7 @@ AtBash Cipher is a typeface and interactive web experience based on the Atbash c
 
 ## Demo
 
-[Live Demo](https://be-akverse.github.io/Atbash-Cipher/) &mdash; Try the live encoder!
+[Live Demo](https://be-keb.github.io/atbash/) &mdash; Try the live encoder!
 
 ## Features
 
